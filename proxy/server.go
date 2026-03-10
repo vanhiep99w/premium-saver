@@ -89,21 +89,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 
-	// Route supported paths (accept both /v1/... and /... formats)
-	path := r.URL.Path
-	if strings.HasPrefix(path, "/v1/chat/completions") ||
-		strings.HasPrefix(path, "/v1/responses") ||
-		strings.HasPrefix(path, "/v1/models") ||
-		strings.HasPrefix(path, "/chat/completions") ||
-		strings.HasPrefix(path, "/responses") ||
-		strings.HasPrefix(path, "/models") {
-		s.proxy.ServeHTTP(w, r)
-		return
-	}
-
-	// Unknown path
-	http.Error(w, fmt.Sprintf(`{"error": {"message": "unsupported endpoint: %s", "type": "invalid_request"}}`, path),
-		http.StatusNotFound)
+	// Forward all API requests to Copilot (strip /v1 prefix in Director)
+	// Supports: /chat/completions, /responses, /models, /embeddings, and any future endpoints
+	s.proxy.ServeHTTP(w, r)
 }
 
 // handleHealth returns the proxy health and auth status.
