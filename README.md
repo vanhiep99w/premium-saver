@@ -56,7 +56,7 @@ Requires Go 1.21+.
 
 ```bash
 git clone https://github.com/vanhiep99w/premium-saver.git
-cd premium-saver/copilot-proxy
+cd premium-saver
 go build -o copilot-proxy .
 ```
 
@@ -65,7 +65,7 @@ go build -o copilot-proxy .
 ### 1. Login with GitHub
 
 ```bash
-./copilot-proxy login
+copilot-proxy login
 ```
 
 This starts the GitHub OAuth device flow:
@@ -77,13 +77,13 @@ This starts the GitHub OAuth device flow:
 ### 2. Start the proxy
 
 ```bash
-./copilot-proxy serve
+copilot-proxy serve
 ```
 
 Default port is `8787`. Use `-p` to change:
 
 ```bash
-./copilot-proxy serve -p 9090
+copilot-proxy serve -p 9090
 ```
 
 ### 3. Configure your AI client
