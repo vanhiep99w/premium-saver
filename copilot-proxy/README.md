@@ -25,33 +25,39 @@ This proxy sits between your AI client and GitHub Copilot's API, forcing all req
 
 ## Requirements
 
-- Go 1.21+ (for building from source)
 - A GitHub account with Copilot subscription
 
 ## Installation
 
-### Build from source
+### One-line install (recommended)
 
 ```bash
-git clone https://github.com/hieptran/copilot-proxy.git
-cd copilot-proxy
-go build -o copilot-proxy .
+curl -fsSL https://raw.githubusercontent.com/vanhiep99w/premium-saver/main/install.sh | sh
 ```
 
-### Cross-compile for other platforms
+This auto-detects your OS and architecture, downloads the latest binary, and installs it to `/usr/local/bin`.
+
+**Custom install directory:**
+```bash
+INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/vanhiep99w/premium-saver/main/install.sh | sh
+```
+
+### Download from GitHub Releases
+
+Pre-built binaries are available for Linux, macOS, and Windows at:
+
+https://github.com/vanhiep99w/premium-saver/releases
+
+Download the binary for your platform, make it executable, and move it to your PATH.
+
+### Build from source
+
+Requires Go 1.21+.
 
 ```bash
-# macOS (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build -o copilot-proxy-darwin-arm64 .
-
-# macOS (Intel)
-GOOS=darwin GOARCH=amd64 go build -o copilot-proxy-darwin-amd64 .
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o copilot-proxy.exe .
-
-# Linux
-GOOS=linux GOARCH=amd64 go build -o copilot-proxy-linux-amd64 .
+git clone https://github.com/vanhiep99w/premium-saver.git
+cd premium-saver/copilot-proxy
+go build -o copilot-proxy .
 ```
 
 ## Quick Start

@@ -2,6 +2,7 @@
 copilot-proxy
 copilot-proxy-*
 *.exe
+dist/
 
 # Auth tokens (never commit!)
 auth.json
