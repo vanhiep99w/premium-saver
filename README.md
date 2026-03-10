@@ -95,17 +95,17 @@ Settings > API Provider: OpenAI Compatible
 <details>
 <summary><b>Claude Code</b></summary>
 
-```bash
-ANTHROPIC_BASE_URL=http://localhost:8787/v1 \
-ANTHROPIC_API_KEY=any-value \
-claude
+Edit `~/.claude/settings.json`:
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:8787/v1",
+    "ANTHROPIC_AUTH_TOKEN": "any-value"
+  }
+}
 ```
 
-Or set in your shell profile (`~/.bashrc`, `~/.zshrc`):
-```bash
-export ANTHROPIC_BASE_URL=http://localhost:8787/v1
-export ANTHROPIC_API_KEY=any-value
-```
+Then open a new terminal and run `claude`.
 </details>
 
 <details>
