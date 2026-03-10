@@ -1,0 +1,7 @@
+# Binary
+copilot-proxy
+copilot-proxy-*
+*.exe
+
+# Auth tokens (never commit!)
+auth.json
