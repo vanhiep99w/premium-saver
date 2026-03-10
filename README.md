@@ -93,6 +93,22 @@ Settings > API Provider: OpenAI Compatible
 </details>
 
 <details>
+<summary><b>Claude Code</b></summary>
+
+```bash
+ANTHROPIC_BASE_URL=http://localhost:8787/v1 \
+ANTHROPIC_API_KEY=any-value \
+claude
+```
+
+Or set in your shell profile (`~/.bashrc`, `~/.zshrc`):
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:8787/v1
+export ANTHROPIC_API_KEY=any-value
+```
+</details>
+
+<details>
 <summary><b>Python / Node.js / curl</b></summary>
 
 ```python
