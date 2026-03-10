@@ -136,6 +136,69 @@ curl http://localhost:8787/v1/chat/completions \
 ```
 </details>
 
+## Available Models
+
+40+ models available via Copilot. Run `copilot-proxy serve` and query `http://localhost:8787/v1/models` for the full list.
+
+### Anthropic
+
+| Model ID | Name | Category |
+|----------|------|----------|
+| `claude-opus-4.6` | Claude Opus 4.6 | powerful |
+| `claude-opus-4.6-fast` | Claude Opus 4.6 (fast mode) | powerful (preview) |
+| `claude-sonnet-4.6` | Claude Sonnet 4.6 | versatile |
+| `claude-sonnet-4.5` | Claude Sonnet 4.5 | versatile |
+| `claude-sonnet-4` | Claude Sonnet 4 | versatile |
+| `claude-opus-4.5` | Claude Opus 4.5 | powerful |
+| `claude-haiku-4.5` | Claude Haiku 4.5 | versatile |
+
+### OpenAI
+
+| Model ID | Name | Category |
+|----------|------|----------|
+| `gpt-5.4` | GPT-5.4 | powerful |
+| `gpt-5.3-codex` | GPT-5.3-Codex | powerful |
+| `gpt-5.2` | GPT-5.2 | versatile |
+| `gpt-5.2-codex` | GPT-5.2-Codex | powerful |
+| `gpt-5.1` | GPT-5.1 | versatile |
+| `gpt-5.1-codex` | GPT-5.1-Codex | powerful |
+| `gpt-5.1-codex-max` | GPT-5.1-Codex-Max | powerful |
+| `gpt-5.1-codex-mini` | GPT-5.1-Codex-Mini | powerful (preview) |
+| `gpt-5-mini` | GPT-5 mini | lightweight |
+| `gpt-4.1` | GPT-4.1 | versatile |
+| `gpt-4o` | GPT-4o | versatile |
+
+### Google
+
+| Model ID | Name | Category |
+|----------|------|----------|
+| `gemini-3.1-pro-preview` | Gemini 3.1 Pro | powerful (preview) |
+| `gemini-3-pro-preview` | Gemini 3 Pro | powerful (preview) |
+| `gemini-3-flash-preview` | Gemini 3 Flash | lightweight (preview) |
+| `gemini-2.5-pro` | Gemini 2.5 Pro | powerful |
+
+### Microsoft / xAI
+
+| Model ID | Name | Category |
+|----------|------|----------|
+| `oswe-vscode-prime` | Raptor mini | versatile (preview) |
+| `grok-code-fast-1` | Grok Code Fast 1 | lightweight |
+
+### Embeddings
+
+| Model ID | Name |
+|----------|------|
+| `text-embedding-3-small` | Embedding V3 small |
+| `text-embedding-3-small-inference` | Embedding V3 small (Inference) |
+
+<details>
+<summary><b>Legacy / internal models (14 more)</b></summary>
+
+These are older model versions or internal aliases. They still work but aren't shown in Copilot's model picker:
+
+`gpt-4o-2024-11-20`, `gpt-4o-2024-08-06`, `gpt-4o-2024-05-13`, `gpt-4o-mini-2024-07-18`, `gpt-4.1-2025-04-14`, `gpt-4-o-preview`, `gpt-4-0125-preview`, `gpt-4-0613`, `gpt-4`, `gpt-3.5-turbo-0613`, `gpt-3.5-turbo`, `gpt-4o-mini`, `oswe-vscode-secondary`, `text-embedding-ada-002`
+</details>
+
 ## Other Commands
 
 ```bash
