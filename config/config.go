@@ -51,3 +51,42 @@ func AuthFilePath() (string, error) {
 	}
 	return filepath.Join(dir, "auth.json"), nil
 }
+
+// DBPath returns the SQLite database file path.
+// Uses DB_PATH env var, or defaults to ~/.config/copilot-proxy/copilot-proxy.db
+func DBPath() (string, error) {
+	if p := os.Getenv("DB_PATH"); p != "" {
+		dir := filepath.Dir(p)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return "", err
+		}
+		return p, nil
+	}
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		configDir = filepath.Join(home, ".config")
+	}
+	dir := filepath.Join(configDir, "copilot-proxy")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "copilot-proxy.db"), nil
+}
+
+// AdminUsername returns the admin username from ADMIN_USERNAME env var (default: "admin").
+func AdminUsername() string {
+	if u := os.Getenv("ADMIN_USERNAME"); u != "" {
+		return u
+	}
+	return "admin"
+}
+
+// AdminPassword returns the admin password from ADMIN_PASSWORD env var.
+// Returns empty string if not set.
+func AdminPassword() string {
+	return os.Getenv("ADMIN_PASSWORD")
+}
