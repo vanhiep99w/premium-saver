@@ -1,4 +1,4 @@
-name: Release
+name: Release & Deploy
 
 on:
   push:
@@ -75,3 +75,48 @@ jobs:
             dist/copilot-proxy-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: Deploy to DigitalOcean
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download linux-amd64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: copilot-proxy-linux-amd64
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          password: ${{ secrets.DO_PASSWORD }}
+          port: 22
+          script: |
+            systemctl stop copilot-proxy || true
+
+      - name: Copy binary to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          password: ${{ secrets.DO_PASSWORD }}
+          port: 22
+          source: copilot-proxy-linux-amd64
+          target: /tmp/
+
+      - name: Install and restart
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          password: ${{ secrets.DO_PASSWORD }}
+          port: 22
+          script: |
+            mv /tmp/copilot-proxy-linux-amd64 /usr/local/bin/copilot-proxy
+            chmod +x /usr/local/bin/copilot-proxy
+            systemctl start copilot-proxy
+            sleep 2
+            systemctl status copilot-proxy --no-pager
+            echo "Deployed $(copilot-proxy help 2>&1 | head -1) successfully"
