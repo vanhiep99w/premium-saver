@@ -6,3 +6,6 @@ dist/
 
 # Auth tokens (never commit!)
 auth.json
+
+# Worktrees
+.worktrees/
