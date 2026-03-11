@@ -21,7 +21,7 @@ func New(path string) (*DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	conn.SetMaxOpenConns(1) // SQLite supports one writer at a time
+	conn.SetMaxOpenConns(10) // WAL mode allows concurrent readers with one writer
 
 	db := &DB{conn: conn}
 	if err := db.migrate(); err != nil {

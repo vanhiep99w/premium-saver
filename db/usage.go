@@ -42,24 +42,23 @@ func (db *DB) InsertUsage(r UsageRecord) error {
 // GetUsageStats returns aggregated usage stats for a user across multiple time periods.
 func (db *DB) GetUsageStats(userID int) ([]UsageStats, error) {
 	periods := []struct {
-		name     string
-		duration time.Duration
+		name   string
+		sqlArg string
 	}{
-		{"1h", 1 * time.Hour},
-		{"5h", 5 * time.Hour},
-		{"1d", 24 * time.Hour},
-		{"30d", 30 * 24 * time.Hour},
+		{"1h", "-1 hours"},
+		{"5h", "-5 hours"},
+		{"1d", "-1 days"},
+		{"30d", "-30 days"},
 	}
 
 	var stats []UsageStats
 	for _, p := range periods {
-		since := time.Now().Add(-p.duration)
 		var s UsageStats
 		s.Period = p.name
 		err := db.conn.QueryRow(
 			`SELECT COUNT(*), COALESCE(SUM(prompt_tokens), 0), COALESCE(SUM(completion_tokens), 0), COALESCE(SUM(total_tokens), 0)
-			 FROM usage_logs WHERE user_id = ? AND created_at >= ?`,
-			userID, since,
+			 FROM usage_logs WHERE user_id = ? AND created_at >= datetime('now', ?)`,
+			userID, p.sqlArg,
 		).Scan(&s.RequestCount, &s.PromptTokens, &s.CompletionTokens, &s.TotalTokens)
 		if err != nil {
 			return nil, err

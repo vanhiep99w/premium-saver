@@ -2,7 +2,6 @@ package admin
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net"
@@ -222,10 +221,14 @@ func (a *Admin) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error": "name is required"}`, http.StatusBadRequest)
 		return
 	}
+	if len(name) > 255 {
+		http.Error(w, `{"error": "name too long (max 255 characters)"}`, http.StatusBadRequest)
+		return
+	}
 
 	user, apiKey, err := a.db.CreateUser(name)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusInternalServerError)
+		writeJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -244,7 +247,7 @@ func (a *Admin) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.db.DeleteUser(id); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusNotFound)
+		writeJSONError(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -268,7 +271,7 @@ func (a *Admin) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.db.SetUserActive(id, *body.Active); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusNotFound)
+		writeJSONError(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -344,4 +347,10 @@ func clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+func writeJSONError(w http.ResponseWriter, msg string, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
