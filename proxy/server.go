@@ -1,9 +1,12 @@
 package proxy
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -60,6 +63,11 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 
 			if strings.HasPrefix(req.URL.Path, "/v1/") {
 				req.URL.Path = "/" + strings.TrimPrefix(req.URL.Path, "/v1/")
+			}
+
+			// Inject stream_options to get usage data in streaming responses
+			if req.Method == "POST" && req.Body != nil && s.tracker != nil {
+				injectStreamOptions(req)
 			}
 
 			token, err := s.authenticator.GetCopilotToken()
@@ -224,4 +232,41 @@ func extractAPIKey(r *http.Request) string {
 		return strings.TrimPrefix(auth, "Bearer ")
 	}
 	return auth
+}
+
+// injectStreamOptions modifies the request body to add stream_options.include_usage=true
+// so the API returns token usage data in streaming responses.
+func injectStreamOptions(req *http.Request) {
+	body, err := io.ReadAll(req.Body)
+	req.Body.Close()
+	if err != nil || len(body) == 0 {
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		return
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		return
+	}
+
+	// Only inject if stream is true
+	if stream, ok := payload["stream"].(bool); !ok || !stream {
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		return
+	}
+
+	// Add stream_options if not already set
+	if _, exists := payload["stream_options"]; !exists {
+		payload["stream_options"] = map[string]any{"include_usage": true}
+	}
+
+	modified, err := json.Marshal(payload)
+	if err != nil {
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		return
+	}
+
+	req.Body = io.NopCloser(bytes.NewReader(modified))
+	req.ContentLength = int64(len(modified))
 }
