@@ -45,13 +45,23 @@ func New(database *db.DB, tmpl *template.Template) *Admin {
 }
 
 // SetupAdmin seeds the admin account from env vars if needed.
+// On first run, creates the admin row. On subsequent runs, only updates if password changed.
 func (a *Admin) SetupAdmin(username, password string) error {
+	var storedHash string
+	var storedUsername string
+	err := a.db.Conn().QueryRow("SELECT username, password_hash FROM admin WHERE id = 1").Scan(&storedUsername, &storedHash)
+	if err == nil {
+		// Row exists — only update if username changed or password differs
+		if storedUsername == username && bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil {
+			return nil // no changes needed
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	// Upsert: insert or update if password changed
 	_, err = a.db.Conn().Exec(
 		`INSERT INTO admin (id, username, password_hash) VALUES (1, ?, ?)
 		 ON CONFLICT(id) DO UPDATE SET username = excluded.username, password_hash = excluded.password_hash`,
