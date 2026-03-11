@@ -29,7 +29,7 @@ func TestSettingsPageRendersCurrentValue(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
-	if !strings.Contains(rec.Body.String(), "value=\"20\"") {
+	if !strings.Contains(rec.Body.String(), "value=\"7\"") {
 		t.Fatalf("body = %q, want current cadence", rec.Body.String())
 	}
 }
@@ -79,8 +79,8 @@ func TestSettingsUpdateRejectsInvalidValue(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", rec.Code)
 	}
-	if got := adminHandler.initiatorSettings.GetUserEvery(); got != 20 {
-		t.Fatalf("runtime value = %d, want unchanged 20", got)
+	if got := adminHandler.initiatorSettings.GetUserEvery(); got != 7 {
+		t.Fatalf("runtime value = %d, want unchanged 7", got)
 	}
 }
 
@@ -100,7 +100,7 @@ func newTestAdmin(t *testing.T) (*Admin, func()) {
 		"settings": template.Must(template.New("layout").Parse(`{{define "layout"}}<input value="{{.UserEvery}}">{{end}}`)),
 	}
 
-	settings := &testInitiatorSettings{userEvery: 20}
+	settings := &testInitiatorSettings{userEvery: 7}
 	adminHandler := New(database, tmpls, settings)
 
 	cleanup := func() {

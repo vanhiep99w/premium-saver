@@ -35,7 +35,7 @@ const (
 
 	// Default proxy port
 	DefaultPort               = 8787
-	DefaultInitiatorUserEvery = 20
+	DefaultInitiatorUserEvery = 7
 )
 
 // AuthFilePath returns the path to the auth storage file.
@@ -95,7 +95,7 @@ func AdminPassword() string {
 }
 
 // InitiatorUserEvery returns how many agent requests to send before one user request.
-// Example: 20 means 20 agent requests, then 1 user request.
+// Example: 7 means 7 agent requests, then 1 user request.
 func InitiatorUserEvery() int {
 	raw := os.Getenv("X_INITIATOR_USER_EVERY")
 	if raw == "" {
