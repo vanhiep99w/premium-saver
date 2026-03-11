@@ -2,12 +2,17 @@
 <div class="page-header">
     <div>
         <a href="/admin/users" class="back-link">&larr; Back to Users</a>
-        <h2>Report: {{.User.Name}}
+        <h2>{{.User.Name}}
             <span class="status-badge {{if .User.Active}}active{{else}}inactive{{end}}">
                 {{if .User.Active}}active{{else}}inactive{{end}}
             </span>
         </h2>
     </div>
+</div>
+
+<div class="api-key-display" style="margin-bottom:24px;">
+    <code id="api-key-prefix-value">{{.User.APIKeyPrefix}}...</code>
+    <button class="btn-copy" onclick="copyText('{{.User.APIKeyPrefix}}...', this)">Copy Prefix</button>
 </div>
 
 <section class="stats-section">
@@ -29,7 +34,7 @@
         <div class="stat-card">
             <div class="stat-label">{{.Period}}</div>
             <div class="stat-value token-count">{{.TotalTokens}}</div>
-            <div class="stat-detail">P:{{.PromptTokens}} C:{{.CompletionTokens}}</div>
+            <div class="stat-detail">P: {{.PromptTokens}} &middot; C: {{.CompletionTokens}}</div>
         </div>
         {{end}}
     </div>
@@ -50,9 +55,9 @@
             {{range .RecentRequests}}
             <tr>
                 <td class="time-ago" data-time="{{.Time.Format "2006-01-02T15:04:05Z"}}">{{.Time.Format "15:04:05"}}</td>
-                <td><code>{{.Path}}</code></td>
+                <td><code class="key-prefix">{{.Path}}</code></td>
                 <td>{{.Model}}</td>
-                <td>{{.TotalTokens}}</td>
+                <td style="font-family:var(--font-mono);font-size:13px;">{{.TotalTokens}}</td>
             </tr>
             {{else}}
             <tr><td colspan="4" class="empty">No requests yet.</td></tr>
@@ -61,5 +66,3 @@
     </table>
 </section>
 {{end}}
-
-{{template "layout" .}}

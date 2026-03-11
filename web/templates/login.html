@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>Copilot Proxy</h1>
+        <h1><span class="accent">&gt;_</span> copilot-proxy</h1>
         <p class="subtitle">Admin Login</p>
         {{if .Error}}
         <div class="error">{{.Error}}</div>
@@ -16,7 +16,7 @@
         <form method="POST" action="/admin/login">
             <input type="text" name="username" placeholder="Username" required autofocus>
             <input type="password" name="password" placeholder="Password" required>
-            <button type="submit" class="btn-primary">Login</button>
+            <button type="submit" class="btn-primary" style="width:100%;margin-top:4px;">Login</button>
         </form>
     </div>
 </body>

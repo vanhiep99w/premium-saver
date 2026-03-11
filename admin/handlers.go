@@ -2,6 +2,7 @@ package admin
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net"
@@ -19,7 +20,7 @@ import (
 type Admin struct {
 	db       *db.DB
 	sessions *SessionManager
-	tmpl     *template.Template
+	tmpls    map[string]*template.Template
 	throttle *loginThrottle
 }
 
@@ -34,11 +35,11 @@ type throttleState struct {
 }
 
 // New creates a new Admin handler.
-func New(database *db.DB, tmpl *template.Template) *Admin {
+func New(database *db.DB, tmpls map[string]*template.Template) *Admin {
 	return &Admin{
 		db:       database,
 		sessions: NewSessionManager(),
-		tmpl:     tmpl,
+		tmpls:    tmpls,
 		throttle: &loginThrottle{failures: make(map[string]throttleState)},
 	}
 }
@@ -118,7 +119,7 @@ func (a *Admin) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 		return
 	}
-	a.tmpl.ExecuteTemplate(w, "login.html", map[string]any{
+	a.tmpls["login"].Execute(w, map[string]any{
 		"Error": r.URL.Query().Get("error"),
 	})
 }
@@ -197,19 +198,24 @@ func (a *Admin) handleUsersPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get 24h request count for each user
 	type userWithStats struct {
 		db.User
-		Requests24h int
+		Requests24h    int
+		TotalTokensStr string
 	}
 	var usersWithStats []userWithStats
 	for _, u := range users {
 		count, _ := a.db.GetRequestCount24h(u.ID)
-		usersWithStats = append(usersWithStats, userWithStats{User: u, Requests24h: count})
+		tokens, _ := a.db.GetTotalTokens(u.ID)
+		usersWithStats = append(usersWithStats, userWithStats{
+			User:           u,
+			Requests24h:    count,
+			TotalTokensStr: formatTokens(tokens),
+		})
 	}
 
 	csrf := r.Header.Get("X-CSRF-Token")
-	a.tmpl.ExecuteTemplate(w, "users.html", map[string]any{
+	a.tmpls["users"].ExecuteTemplate(w, "layout", map[string]any{
 		"Users":     usersWithStats,
 		"CSRFToken": csrf,
 	})
@@ -303,7 +309,7 @@ func (a *Admin) handleReportPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	csrf := r.Header.Get("X-CSRF-Token")
-	a.tmpl.ExecuteTemplate(w, "report.html", map[string]any{
+	a.tmpls["report"].ExecuteTemplate(w, "layout", map[string]any{
 		"User":           user,
 		"Stats":          stats,
 		"RecentRequests": recentReqs,
@@ -353,4 +359,24 @@ func writeJSONError(w http.ResponseWriter, msg string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
+// formatTokens formats token counts into compact human-readable strings.
+// Examples: 0, 542, 1.2k, 25k, 100k, 1.5M, 12M
+func formatTokens(n int64) string {
+	if n < 1000 {
+		return fmt.Sprintf("%d", n)
+	}
+	if n < 1_000_000 {
+		k := float64(n) / 1000
+		if k < 10 {
+			return fmt.Sprintf("%.1fk", k)
+		}
+		return fmt.Sprintf("%.0fk", k)
+	}
+	m := float64(n) / 1_000_000
+	if m < 10 {
+		return fmt.Sprintf("%.1fM", m)
+	}
+	return fmt.Sprintf("%.0fM", m)
 }

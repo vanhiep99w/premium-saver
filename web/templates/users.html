@@ -7,7 +7,7 @@
 <div id="add-user-modal" class="modal" style="display:none;">
     <div class="modal-content">
         <h3>Add New User</h3>
-        <input type="text" id="new-user-name" placeholder="User name" autofocus>
+        <input type="text" id="new-user-name" placeholder="Enter a name for this user" autofocus>
         <div class="modal-actions">
             <button class="btn-secondary" onclick="hideAddUser()">Cancel</button>
             <button class="btn-primary" onclick="createUser()">Create</button>
@@ -18,12 +18,12 @@
 <div id="api-key-modal" class="modal" style="display:none;">
     <div class="modal-content">
         <h3>API Key Created</h3>
-        <p class="warning">Copy this API key now. It cannot be retrieved again.</p>
+        <div class="warning">Copy this API key now. It cannot be retrieved again.</div>
         <div class="api-key-display">
             <code id="api-key-value"></code>
             <button class="btn-copy" onclick="copyAPIKey()">Copy</button>
         </div>
-        <button class="btn-primary" onclick="hideAPIKey()">Done</button>
+        <button class="btn-primary" style="width:100%;" onclick="hideAPIKey()">Done</button>
     </div>
 </div>
 
@@ -34,13 +34,14 @@
             <th>API Key</th>
             <th>Status</th>
             <th>Requests (24h)</th>
+            <th>Total Tokens</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody id="users-table">
         {{range .Users}}
         <tr id="user-row-{{.ID}}">
-            <td>{{.Name}}</td>
+            <td><strong>{{.Name}}</strong></td>
             <td><code class="key-prefix">{{.APIKeyPrefix}}...</code></td>
             <td>
                 <span class="status-badge {{if .Active}}active{{else}}inactive{{end}}"
@@ -48,17 +49,16 @@
                     {{if .Active}}active{{else}}inactive{{end}}
                 </span>
             </td>
-            <td>{{.Requests24h}}</td>
+            <td style="font-family:var(--font-mono);font-size:13px;">{{.Requests24h}}</td>
+            <td style="font-family:var(--font-mono);font-size:13px;color:var(--amber);">{{.TotalTokensStr}}</td>
             <td class="actions">
                 <a href="/admin/report/{{.ID}}" class="btn-link">report</a>
                 <button class="btn-danger-sm" onclick="deleteUser({{.ID}}, '{{.Name}}')">delete</button>
             </td>
         </tr>
         {{else}}
-        <tr><td colspan="5" class="empty">No users yet. Click "Add User" to create one.</td></tr>
+        <tr><td colspan="6" class="empty">No users yet. Click "+ Add User" to create one.</td></tr>
         {{end}}
     </tbody>
 </table>
 {{end}}
-
-{{template "layout" .}}

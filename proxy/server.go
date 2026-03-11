@@ -108,8 +108,8 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 }
 
 // SetupAdmin configures the admin UI routes.
-func (s *Server) SetupAdmin(tmpl *template.Template, username, password string) error {
-	s.adminHandler = admin.New(s.database, tmpl)
+func (s *Server) SetupAdmin(tmpls map[string]*template.Template, username, password string) error {
+	s.adminHandler = admin.New(s.database, tmpls)
 	if err := s.adminHandler.SetupAdmin(username, password); err != nil {
 		return err
 	}

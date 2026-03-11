@@ -178,12 +178,35 @@ func cmdServe() {
 
 	// Setup admin UI if password is configured
 	if adminPassword != "" {
-		tmpl, err := template.ParseFS(web.Templates, "templates/*.html")
+		// Parse each page template separately with the layout to avoid
+		// {{define "content"}} name conflicts between pages.
+		tmpls := make(map[string]*template.Template)
+
+		// Login page (standalone, no layout)
+		loginTmpl, err := template.ParseFS(web.Templates, "templates/login.html")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing templates: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Error parsing login template: %v\n", err)
 			os.Exit(1)
 		}
-		if err := server.SetupAdmin(tmpl, config.AdminUsername(), adminPassword); err != nil {
+		tmpls["login"] = loginTmpl
+
+		// Users page (layout + users content)
+		usersTmpl, err := template.ParseFS(web.Templates, "templates/layout.html", "templates/users.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing users template: %v\n", err)
+			os.Exit(1)
+		}
+		tmpls["users"] = usersTmpl
+
+		// Report page (layout + report content)
+		reportTmpl, err := template.ParseFS(web.Templates, "templates/layout.html", "templates/report.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing report template: %v\n", err)
+			os.Exit(1)
+		}
+		tmpls["report"] = reportTmpl
+
+		if err := server.SetupAdmin(tmpls, config.AdminUsername(), adminPassword); err != nil {
 			fmt.Fprintf(os.Stderr, "Error setting up admin: %v\n", err)
 			os.Exit(1)
 		}

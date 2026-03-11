@@ -91,6 +91,16 @@ func (db *DB) GetRecentRequests(userID int, limit int) ([]RecentRequest, error) 
 	return reqs, rows.Err()
 }
 
+// GetTotalTokens returns the all-time total token usage for a user.
+func (db *DB) GetTotalTokens(userID int) (int64, error) {
+	var total int64
+	err := db.conn.QueryRow(
+		"SELECT COALESCE(SUM(total_tokens), 0) FROM usage_logs WHERE user_id = ?",
+		userID,
+	).Scan(&total)
+	return total, err
+}
+
 // GetRequestCount24h returns the request count in the last 24 hours for a user.
 func (db *DB) GetRequestCount24h(userID int) (int, error) {
 	var count int
