@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/hieptran/copilot-proxy/auth"
 	"github.com/hieptran/copilot-proxy/config"
+	"github.com/hieptran/copilot-proxy/db"
 	"github.com/hieptran/copilot-proxy/proxy"
+	"github.com/hieptran/copilot-proxy/web"
 )
 
 func main() {
@@ -53,10 +56,15 @@ func printUsage() {
 	fmt.Println("Serve options:")
 	fmt.Printf("  -p PORT   Port to listen on (default: %d)\n", config.DefaultPort)
 	fmt.Println()
+	fmt.Println("Environment variables:")
+	fmt.Println("  ADMIN_USERNAME  Admin login username (default: admin)")
+	fmt.Println("  ADMIN_PASSWORD  Admin login password (required for admin UI)")
+	fmt.Println("  DB_PATH         SQLite database path (default: ~/.config/copilot-proxy/copilot-proxy.db)")
+	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  copilot-proxy login")
 	fmt.Println("  copilot-proxy serve")
-	fmt.Println("  copilot-proxy serve -p 9090")
+	fmt.Println("  ADMIN_PASSWORD=secret copilot-proxy serve -p 9090")
 }
 
 func cmdLogin() {
@@ -119,7 +127,6 @@ func cmdStatus() {
 func cmdServe() {
 	port := config.DefaultPort
 
-	// Parse -p flag
 	for i := 2; i < len(os.Args); i++ {
 		if os.Args[i] == "-p" && i+1 < len(os.Args) {
 			p, err := strconv.Atoi(os.Args[i+1])
@@ -128,7 +135,7 @@ func cmdServe() {
 				os.Exit(1)
 			}
 			port = p
-			i++ // skip next arg
+			i++
 		}
 	}
 
@@ -145,10 +152,45 @@ func cmdServe() {
 
 	authenticator := auth.NewAuthenticator(store)
 
-	server, err := proxy.NewServer(authenticator, port)
+	// Initialize database only if admin is configured
+	var database *db.DB
+	adminPassword := config.AdminPassword()
+	if adminPassword != "" {
+		dbPath, err := config.DBPath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting DB path: %v\n", err)
+			os.Exit(1)
+		}
+		database, err = db.New(dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error opening database: %v\n", err)
+			os.Exit(1)
+		}
+		defer database.Close()
+		database.StartCleanupJob()
+	}
+
+	server, err := proxy.NewServer(authenticator, port, database)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating server: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Setup admin UI if password is configured
+	if adminPassword != "" {
+		tmpl, err := template.ParseFS(web.Templates, "templates/*.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing templates: %v\n", err)
+			os.Exit(1)
+		}
+		if err := server.SetupAdmin(tmpl, config.AdminUsername(), adminPassword); err != nil {
+			fmt.Fprintf(os.Stderr, "Error setting up admin: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("WARNING: ADMIN_PASSWORD not set. Admin UI is disabled.")
+		fmt.Println("Set ADMIN_PASSWORD environment variable to enable admin UI.")
+		fmt.Println()
 	}
 
 	if err := server.Start(); err != nil {
