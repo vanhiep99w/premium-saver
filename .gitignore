@@ -9,3 +9,11 @@ auth.json
 
 # Worktrees
 .worktrees/
+
+# SQLite database files
+*.db
+*.db-wal
+*.db-shm
+
+# Superpowers
+.superpowers/
