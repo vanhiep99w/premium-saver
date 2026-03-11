@@ -18,10 +18,16 @@ import (
 
 // Admin handles admin UI routes.
 type Admin struct {
-	db       *db.DB
-	sessions *SessionManager
-	tmpls    map[string]*template.Template
-	throttle *loginThrottle
+	db                *db.DB
+	sessions          *SessionManager
+	tmpls             map[string]*template.Template
+	throttle          *loginThrottle
+	initiatorSettings InitiatorSettings
+}
+
+type InitiatorSettings interface {
+	GetUserEvery() int
+	SetUserEvery(int)
 }
 
 type loginThrottle struct {
@@ -30,17 +36,18 @@ type loginThrottle struct {
 }
 
 type throttleState struct {
-	count     int
-	lastFail  time.Time
+	count    int
+	lastFail time.Time
 }
 
 // New creates a new Admin handler.
-func New(database *db.DB, tmpls map[string]*template.Template) *Admin {
+func New(database *db.DB, tmpls map[string]*template.Template, initiatorSettings InitiatorSettings) *Admin {
 	return &Admin{
-		db:       database,
-		sessions: NewSessionManager(),
-		tmpls:    tmpls,
-		throttle: &loginThrottle{failures: make(map[string]throttleState)},
+		db:                database,
+		sessions:          NewSessionManager(),
+		tmpls:             tmpls,
+		throttle:          &loginThrottle{failures: make(map[string]throttleState)},
+		initiatorSettings: initiatorSettings,
 	}
 }
 
@@ -77,6 +84,8 @@ func (a *Admin) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /admin/logout", a.requireAuth(a.handleLogout))
 	mux.HandleFunc("GET /admin/", a.requireAuth(a.handleDashboard))
 	mux.HandleFunc("GET /admin/users", a.requireAuth(a.handleUsersPage))
+	mux.HandleFunc("GET /admin/settings", a.requireAuth(a.handleSettingsPage))
+	mux.HandleFunc("POST /admin/settings", a.requireAuth(a.handleSettingsUpdate))
 	mux.HandleFunc("POST /admin/users", a.requireAuth(a.handleCreateUser))
 	mux.HandleFunc("DELETE /admin/users/{id}", a.requireAuth(a.handleDeleteUser))
 	mux.HandleFunc("PATCH /admin/users/{id}", a.requireAuth(a.handleUpdateUser))
@@ -218,7 +227,28 @@ func (a *Admin) handleUsersPage(w http.ResponseWriter, r *http.Request) {
 	a.tmpls["users"].ExecuteTemplate(w, "layout", map[string]any{
 		"Users":     usersWithStats,
 		"CSRFToken": csrf,
+		"ActiveNav": "users",
 	})
+}
+
+func (a *Admin) handleSettingsPage(w http.ResponseWriter, r *http.Request) {
+	csrf := r.Header.Get("X-CSRF-Token")
+	a.tmpls["settings"].ExecuteTemplate(w, "layout", map[string]any{
+		"CSRFToken": csrf,
+		"UserEvery": a.initiatorSettings.GetUserEvery(),
+		"ActiveNav": "settings",
+	})
+}
+
+func (a *Admin) handleSettingsUpdate(w http.ResponseWriter, r *http.Request) {
+	userEvery, err := strconv.Atoi(r.FormValue("user_every"))
+	if err != nil || userEvery < 1 {
+		http.Error(w, `{"error": "user_every must be a positive integer"}`, http.StatusBadRequest)
+		return
+	}
+
+	a.initiatorSettings.SetUserEvery(userEvery)
+	http.Redirect(w, r, "/admin/settings", http.StatusSeeOther)
 }
 
 func (a *Admin) handleCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -314,6 +344,7 @@ func (a *Admin) handleReportPage(w http.ResponseWriter, r *http.Request) {
 		"Stats":          stats,
 		"RecentRequests": recentReqs,
 		"CSRFToken":      csrf,
+		"ActiveNav":      "users",
 	})
 }
 

@@ -24,13 +24,14 @@ const userContextKey contextKey = "user"
 
 // Server is the reverse proxy server that forwards requests to GitHub Copilot.
 type Server struct {
-	authenticator *auth.Authenticator
-	port          int
-	proxy         *httputil.ReverseProxy
-	database      *db.DB
-	tracker       *UsageTracker
-	adminHandler  *admin.Admin
-	mux           *http.ServeMux
+	authenticator   *auth.Authenticator
+	port            int
+	proxy           *httputil.ReverseProxy
+	database        *db.DB
+	initiatorPolicy *InitiatorPolicy
+	tracker         *UsageTracker
+	adminHandler    *admin.Admin
+	mux             *http.ServeMux
 }
 
 // NewServer creates a new proxy server.
@@ -41,10 +42,11 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 	}
 
 	s := &Server{
-		authenticator: authenticator,
-		port:          port,
-		database:      database,
-		mux:           http.NewServeMux(),
+		authenticator:   authenticator,
+		port:            port,
+		database:        database,
+		initiatorPolicy: NewInitiatorPolicy(config.InitiatorUserEvery()),
+		mux:             http.NewServeMux(),
 	}
 
 	if database != nil {
@@ -68,7 +70,7 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 				return
 			}
 
-			InjectHeaders(req, token)
+			InjectHeaders(req, token, s.initiatorPolicy.NextInitiator())
 			log.Printf("-> %s %s", req.Method, req.URL.Path)
 		},
 		ModifyResponse: func(resp *http.Response) error {
@@ -109,7 +111,7 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 
 // SetupAdmin configures the admin UI routes.
 func (s *Server) SetupAdmin(tmpls map[string]*template.Template, username, password string) error {
-	s.adminHandler = admin.New(s.database, tmpls)
+	s.adminHandler = admin.New(s.database, tmpls, s.initiatorPolicy)
 	if err := s.adminHandler.SetupAdmin(username, password); err != nil {
 		return err
 	}
@@ -207,7 +209,7 @@ func (s *Server) Start() error {
 		fmt.Println("  API Key:  any-value (proxy handles auth)")
 	}
 	fmt.Println()
-	fmt.Println("All requests will use X-Initiator: agent (premium saver mode)")
+	fmt.Printf("X-Initiator policy: %d agent request(s), then 1 user request\n", s.initiatorPolicy.GetUserEvery())
 	fmt.Println()
 
 	// Register routes

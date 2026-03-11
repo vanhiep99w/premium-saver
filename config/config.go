@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 const (
@@ -10,20 +11,21 @@ const (
 	OAuthClientID = "Iv1.b507a08c87ecfe98"
 
 	// GitHub endpoints
-	GitHubDeviceCodeURL    = "https://github.com/login/device/code"
-	GitHubOAuthTokenURL    = "https://github.com/login/oauth/access_token"
-	GitHubDeviceVerifyURL  = "https://github.com/login/device"
-	CopilotTokenURL        = "https://api.github.com/copilot_internal/v2/token"
+	GitHubDeviceCodeURL   = "https://github.com/login/device/code"
+	GitHubOAuthTokenURL   = "https://github.com/login/oauth/access_token"
+	GitHubDeviceVerifyURL = "https://github.com/login/device"
+	CopilotTokenURL       = "https://api.github.com/copilot_internal/v2/token"
 
 	// Copilot API
 	CopilotAPIBaseURL = "https://api.githubcopilot.com"
 
-	// Headers to impersonate VS Code Copilot Chat
-	UserAgent           = "GitHubCopilotChat/0.35.0"
-	EditorVersion       = "vscode/1.107.0"
-	EditorPluginVersion = "copilot-chat/0.35.0"
-	CopilotIntegrationID = "vscode-chat"
-	OpenAIIntent        = "conversation-edits"
+	// Headers to impersonate OpenCode/Copilot behavior
+	UserAgentPrefix         = "opencode"
+	DefaultUserAgentVersion = "dev"
+	EditorVersion           = "vscode/1.107.0"
+	EditorPluginVersion     = "copilot-chat/0.35.0"
+	CopilotIntegrationID    = "vscode-chat"
+	OpenAIIntent            = "conversation-edits"
 
 	// OAuth scope
 	OAuthScope = "read:user"
@@ -32,7 +34,8 @@ const (
 	TokenRefreshBufferMs = 5 * 60 * 1000
 
 	// Default proxy port
-	DefaultPort = 8787
+	DefaultPort               = 8787
+	DefaultInitiatorUserEvery = 20
 )
 
 // AuthFilePath returns the path to the auth storage file.
@@ -89,4 +92,29 @@ func AdminUsername() string {
 // Returns empty string if not set.
 func AdminPassword() string {
 	return os.Getenv("ADMIN_PASSWORD")
+}
+
+// InitiatorUserEvery returns how many agent requests to send before one user request.
+// Example: 20 means 20 agent requests, then 1 user request.
+func InitiatorUserEvery() int {
+	raw := os.Getenv("X_INITIATOR_USER_EVERY")
+	if raw == "" {
+		return DefaultInitiatorUserEvery
+	}
+
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 1 {
+		return DefaultInitiatorUserEvery
+	}
+
+	return value
+}
+
+// UserAgent returns the OpenCode-style user agent string.
+func UserAgent() string {
+	version := os.Getenv("OPENCODE_VERSION")
+	if version == "" {
+		version = DefaultUserAgentVersion
+	}
+	return UserAgentPrefix + "/" + version
 }

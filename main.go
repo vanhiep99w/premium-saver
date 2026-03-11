@@ -206,6 +206,14 @@ func cmdServe() {
 		}
 		tmpls["report"] = reportTmpl
 
+		// Settings page (layout + settings content)
+		settingsTmpl, err := template.ParseFS(web.Templates, "templates/layout.html", "templates/settings.html")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing settings template: %v\n", err)
+			os.Exit(1)
+		}
+		tmpls["settings"] = settingsTmpl
+
 		if err := server.SetupAdmin(tmpls, config.AdminUsername(), adminPassword); err != nil {
 			fmt.Fprintf(os.Stderr, "Error setting up admin: %v\n", err)
 			os.Exit(1)

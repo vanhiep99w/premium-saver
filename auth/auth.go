@@ -63,7 +63,7 @@ func (a *Authenticator) RequestDeviceCode() (*DeviceCodeResponse, error) {
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", config.UserAgent)
+	req.Header.Set("User-Agent", config.UserAgent())
 
 	resp, err := a.client.Do(req)
 	if err != nil {
@@ -106,7 +106,7 @@ func (a *Authenticator) PollForToken(deviceCode string, interval int) (string, e
 		}
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", config.UserAgent)
+		req.Header.Set("User-Agent", config.UserAgent())
 
 		resp, err := a.client.Do(req)
 		if err != nil {
@@ -194,7 +194,7 @@ func (a *Authenticator) RefreshCopilotToken() (*CopilotTokenResponse, error) {
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+tokenData.OAuthToken)
-	req.Header.Set("User-Agent", config.UserAgent)
+	req.Header.Set("User-Agent", config.UserAgent())
 	req.Header.Set("Editor-Version", config.EditorVersion)
 	req.Header.Set("Editor-Plugin-Version", config.EditorPluginVersion)
 	req.Header.Set("Copilot-Integration-Id", config.CopilotIntegrationID)

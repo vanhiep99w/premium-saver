@@ -8,19 +8,20 @@ import (
 
 // InjectHeaders sets all required headers for the Copilot API request.
 // This replaces any existing Authorization header with the Copilot token,
-// and forces X-Initiator to "agent" so requests are not billed as premium.
-func InjectHeaders(req *http.Request, copilotToken string) {
+// and sets X-Initiator based on the current runtime policy.
+func InjectHeaders(req *http.Request, copilotToken, initiator string) {
 	// Remove headers that could conflict
 	req.Header.Del("x-api-key")
+	req.Header.Del("authorization")
 
 	// Set Copilot authentication
 	req.Header.Set("Authorization", "Bearer "+copilotToken)
 
-	// Force agent initiator (premium saver!)
-	req.Header.Set("X-Initiator", "agent")
+	// Match OpenCode-style initiator behavior
+	req.Header.Set("X-Initiator", initiator)
 
-	// Impersonate VS Code Copilot Chat
-	req.Header.Set("User-Agent", config.UserAgent)
+	// Match OpenCode-style request headers
+	req.Header.Set("User-Agent", config.UserAgent())
 	req.Header.Set("Editor-Version", config.EditorVersion)
 	req.Header.Set("Editor-Plugin-Version", config.EditorPluginVersion)
 	req.Header.Set("Copilot-Integration-Id", config.CopilotIntegrationID)
