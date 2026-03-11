@@ -1,0 +1,65 @@
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <a href="/admin/users" class="back-link">&larr; Back to Users</a>
+        <h2>Report: {{.User.Name}}
+            <span class="status-badge {{if .User.Active}}active{{else}}inactive{{end}}">
+                {{if .User.Active}}active{{else}}inactive{{end}}
+            </span>
+        </h2>
+    </div>
+</div>
+
+<section class="stats-section">
+    <h3>Request Count</h3>
+    <div class="stats-cards">
+        {{range .Stats}}
+        <div class="stat-card">
+            <div class="stat-label">{{.Period}}</div>
+            <div class="stat-value request-count">{{.RequestCount}}</div>
+        </div>
+        {{end}}
+    </div>
+</section>
+
+<section class="stats-section">
+    <h3>Token Usage</h3>
+    <div class="stats-cards">
+        {{range .Stats}}
+        <div class="stat-card">
+            <div class="stat-label">{{.Period}}</div>
+            <div class="stat-value token-count">{{.TotalTokens}}</div>
+            <div class="stat-detail">P:{{.PromptTokens}} C:{{.CompletionTokens}}</div>
+        </div>
+        {{end}}
+    </div>
+</section>
+
+<section class="stats-section">
+    <h3>Recent Requests</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Path</th>
+                <th>Model</th>
+                <th>Tokens</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .RecentRequests}}
+            <tr>
+                <td class="time-ago" data-time="{{.Time.Format "2006-01-02T15:04:05Z"}}">{{.Time.Format "15:04:05"}}</td>
+                <td><code>{{.Path}}</code></td>
+                <td>{{.Model}}</td>
+                <td>{{.TotalTokens}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="4" class="empty">No requests yet.</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+</section>
+{{end}}
+
+{{template "layout" .}}

@@ -1,0 +1,64 @@
+{{define "content"}}
+<div class="page-header">
+    <h2>User Management</h2>
+    <button class="btn-primary" onclick="showAddUser()">+ Add User</button>
+</div>
+
+<div id="add-user-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Add New User</h3>
+        <input type="text" id="new-user-name" placeholder="User name" autofocus>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="hideAddUser()">Cancel</button>
+            <button class="btn-primary" onclick="createUser()">Create</button>
+        </div>
+    </div>
+</div>
+
+<div id="api-key-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>API Key Created</h3>
+        <p class="warning">Copy this API key now. It cannot be retrieved again.</p>
+        <div class="api-key-display">
+            <code id="api-key-value"></code>
+            <button class="btn-copy" onclick="copyAPIKey()">Copy</button>
+        </div>
+        <button class="btn-primary" onclick="hideAPIKey()">Done</button>
+    </div>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>API Key</th>
+            <th>Status</th>
+            <th>Requests (24h)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="users-table">
+        {{range .Users}}
+        <tr id="user-row-{{.ID}}">
+            <td>{{.Name}}</td>
+            <td><code class="key-prefix">{{.APIKeyPrefix}}...</code></td>
+            <td>
+                <span class="status-badge {{if .Active}}active{{else}}inactive{{end}}"
+                      onclick="toggleActive({{.ID}}, {{.Active}})">
+                    {{if .Active}}active{{else}}inactive{{end}}
+                </span>
+            </td>
+            <td>{{.Requests24h}}</td>
+            <td class="actions">
+                <a href="/admin/report/{{.ID}}" class="btn-link">report</a>
+                <button class="btn-danger-sm" onclick="deleteUser({{.ID}}, '{{.Name}}')">delete</button>
+            </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="5" class="empty">No users yet. Click "Add User" to create one.</td></tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
+
+{{template "layout" .}}
