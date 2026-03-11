@@ -21,6 +21,9 @@ copilot-proxy login
 # 2. Start the proxy
 copilot-proxy serve              # port 8787 (default)
 copilot-proxy serve -p 9090      # custom port
+
+# With admin UI & multi-user support
+ADMIN_PASSWORD=secret copilot-proxy serve
 ```
 
 Then configure your AI client:
@@ -28,7 +31,67 @@ Then configure your AI client:
 | Setting | Value |
 |---------|-------|
 | **Base URL** | `http://localhost:8787/v1` |
-| **API Key** | `any-value` (proxy handles auth) |
+| **API Key** | `any-value` (without admin) or key from admin panel |
+
+## Multi-User Mode (Admin UI)
+
+Set `ADMIN_PASSWORD` to enable the admin panel at `http://localhost:8787/admin/`:
+
+| Env Variable | Default | Description |
+|---|---|---|
+| `ADMIN_PASSWORD` | *(required)* | Admin login password |
+| `ADMIN_USERNAME` | `admin` | Admin login username |
+| `DB_PATH` | `~/.config/copilot-proxy/copilot-proxy.db` | SQLite database path |
+
+Features:
+- Create/delete users with unique API keys
+- Enable/disable users
+- Per-user usage reports (requests, tokens by 1h/5h/1d/30d)
+
+Without `ADMIN_PASSWORD`, the proxy runs in single-user mode (no auth required, no tracking).
+
+## Deploy
+
+Build once, copy the binary — no dependencies needed on the server.
+
+```bash
+# Build
+go build -o copilot-proxy .
+
+# Cross-compile for server
+GOOS=linux GOARCH=amd64 go build -o copilot-proxy-linux .
+GOOS=linux GOARCH=arm64 go build -o copilot-proxy-arm64 .
+
+# Copy to server
+scp copilot-proxy-linux user@server:/opt/copilot-proxy/copilot-proxy
+scp ~/.config/copilot-proxy/auth.json user@server:/home/user/.config/copilot-proxy/
+```
+
+<details>
+<summary><b>systemd service</b></summary>
+
+`/etc/systemd/system/copilot-proxy.service`:
+```ini
+[Unit]
+Description=Copilot Proxy
+After=network.target
+
+[Service]
+User=your-user
+Environment=ADMIN_PASSWORD=your-strong-password
+ExecStart=/opt/copilot-proxy/copilot-proxy serve
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now copilot-proxy
+```
+</details>
 
 ## Client Examples
 
