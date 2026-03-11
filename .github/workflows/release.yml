@@ -2,6 +2,8 @@ name: Release & Deploy
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -9,8 +11,44 @@ permissions:
   contents: write
 
 jobs:
+  auto-tag:
+    name: Auto Tag
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag and bump patch
+        id: bump
+        run: |
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          if [ -z "$latest" ]; then
+            new_tag="v1.0.0"
+          else
+            # Extract major.minor.patch
+            version="${latest#v}"
+            IFS='.' read -r major minor patch <<< "$version"
+            patch=$((patch + 1))
+            new_tag="v${major}.${minor}.${patch}"
+          fi
+          echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
+          echo "Bumping $latest -> $new_tag"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.bump.outputs.new_tag }}
+          git push origin ${{ steps.bump.outputs.new_tag }}
+
   build:
     name: Build binaries
+    needs: [auto-tag]
+    if: always() && (needs.auto-tag.result == 'success' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -53,10 +91,20 @@ jobs:
 
   release:
     name: Create Release
-    needs: build
+    needs: [auto-tag, build]
+    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ needs.auto-tag.outputs.new_tag }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Download all artifacts
         uses: actions/download-artifact@v8
@@ -70,6 +118,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           files: |
             dist/copilot-proxy-*
