@@ -124,8 +124,6 @@ jobs:
             dist/copilot-proxy-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
     name: Deploy to DigitalOcean
     needs: release
     runs-on: ubuntu-latest

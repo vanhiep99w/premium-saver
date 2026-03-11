@@ -91,6 +91,7 @@ func (a *Admin) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /admin/users/{id}", a.requireAuth(a.handleUpdateUser))
 	mux.HandleFunc("GET /admin/report/{id}", a.requireAuth(a.handleReportPage))
 	mux.HandleFunc("GET /admin/api/report/{id}", a.requireAuth(a.handleReportAPI))
+	mux.HandleFunc("GET /admin/api/report/{id}/chart-data", a.requireAuth(a.handleChartDataAPI))
 }
 
 // requireAuth wraps a handler with session authentication and CSRF validation.
@@ -374,6 +375,32 @@ func (a *Admin) handleReportAPI(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (a *Admin) handleChartDataAPI(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error": "invalid id"}`, http.StatusBadRequest)
+		return
+	}
+
+	hourly, err := a.db.GetHourlyUsage(id, 24)
+	if err != nil {
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	models, err := a.db.GetModelBreakdown(id, 30)
+	if err != nil {
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"hourly_usage":    hourly,
+		"model_breakdown": models,
+	})
+}
+
 func clientIP(r *http.Request) string {
 	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
 		parts := strings.SplitN(fwd, ",", 2)
@@ -392,7 +419,17 @@ func writeJSONError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-// formatTokens formats token counts into compact human-readable strings.
+// formatCost formats a cost value into a compact string.
+func formatCost(cost float64) string {
+	if cost < 0.01 {
+		return fmt.Sprintf("$%.4f", cost)
+	}
+	if cost < 1 {
+		return fmt.Sprintf("$%.3f", cost)
+	}
+	return fmt.Sprintf("$%.2f", cost)
+}
+
 // Examples: 0, 542, 1.2k, 25k, 100k, 1.5M, 12M
 func formatTokens(n int64) string {
 	if n < 1000 {

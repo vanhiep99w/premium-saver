@@ -64,14 +64,20 @@ func NewServer(authenticator *auth.Authenticator, port int, database *db.DB) (*S
 				req.URL.Path = "/" + strings.TrimPrefix(req.URL.Path, "/v1/")
 			}
 
+			// Inject stream_options to get usage data in streaming responses
+			if req.Method == "POST" && req.Body != nil {
+				injectStreamOptions(req)
+			}
+
 			token, err := s.authenticator.GetCopilotToken()
 			if err != nil {
 				log.Printf("ERROR: Failed to get Copilot token: %v", err)
 				return
 			}
 
-			InjectHeaders(req, token, s.initiatorPolicy.NextInitiator())
-			log.Printf("-> %s %s", req.Method, req.URL.Path)
+			initiator := s.initiatorPolicy.NextInitiator()
+			InjectHeaders(req, token, initiator)
+			log.Print(formatOutgoingRequestLog(initiator, req.Method, req.URL.Path))
 		},
 		ModifyResponse: func(resp *http.Response) error {
 			log.Printf("<- %s %d %s", resp.Request.URL.Path, resp.StatusCode, resp.Status)
@@ -226,4 +232,8 @@ func extractAPIKey(r *http.Request) string {
 		return strings.TrimPrefix(auth, "Bearer ")
 	}
 	return auth
+}
+
+func formatOutgoingRequestLog(initiator, method, path string) string {
+	return fmt.Sprintf("-> %s %s %s", initiator, method, path)
 }

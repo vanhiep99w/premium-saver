@@ -19,9 +19,9 @@ const (
 	// Copilot API
 	CopilotAPIBaseURL = "https://api.githubcopilot.com"
 
-	// Headers to impersonate OpenCode/Copilot behavior
-	UserAgentPrefix         = "opencode"
-	DefaultUserAgentVersion = "dev"
+	// Headers to impersonate VS Code Copilot Chat behavior
+	UserAgentPrefix         = "GitHubCopilotChat"
+	DefaultUserAgentVersion = "0.35.0"
 	EditorVersion           = "vscode/1.107.0"
 	EditorPluginVersion     = "copilot-chat/0.35.0"
 	CopilotIntegrationID    = "vscode-chat"
@@ -110,7 +110,7 @@ func InitiatorUserEvery() int {
 	return value
 }
 
-// UserAgent returns the OpenCode-style user agent string.
+// UserAgent returns the VS Code Copilot Chat-style user agent string.
 func UserAgent() string {
 	version := os.Getenv("OPENCODE_VERSION")
 	if version == "" {

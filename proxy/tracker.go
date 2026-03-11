@@ -168,6 +168,7 @@ func (r *TrackingReader) emitUsage() {
 		record.PromptTokens = r.usage.PromptTokens
 		record.CompletionTokens = r.usage.CompletionTokens
 		record.TotalTokens = r.usage.TotalTokens
+		record.EstimatedCost = CalculateCost(r.model, r.usage.PromptTokens, r.usage.CompletionTokens)
 	}
 	tracker.Track(record)
 }
@@ -191,6 +192,7 @@ func ParseNonStreamUsage(body io.ReadCloser, userID int, path string, tracker *U
 			PromptTokens:     resp.Usage.PromptTokens,
 			CompletionTokens: resp.Usage.CompletionTokens,
 			TotalTokens:      resp.Usage.TotalTokens,
+			EstimatedCost:    CalculateCost(resp.Model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens),
 		})
 	}
 

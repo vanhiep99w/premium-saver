@@ -23,8 +23,8 @@ func TestInjectHeaders_UsesOpenCodeStyleHeaders(t *testing.T) {
 	if got := req.Header.Get("X-Initiator"); got != "user" {
 		t.Fatalf("X-Initiator = %q, want user", got)
 	}
-	if got := req.Header.Get("User-Agent"); got != "opencode/1.2.3" {
-		t.Fatalf("User-Agent = %q, want opencode/1.2.3", got)
+	if got := req.Header.Get("User-Agent"); got != "GitHubCopilotChat/1.2.3" {
+		t.Fatalf("User-Agent = %q, want GitHubCopilotChat/1.2.3", got)
 	}
 	if got := req.Header.Get("Openai-Intent"); got != "conversation-edits" {
 		t.Fatalf("Openai-Intent = %q, want conversation-edits", got)

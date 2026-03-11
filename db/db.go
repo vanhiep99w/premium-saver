@@ -73,7 +73,14 @@ func (db *DB) migrate() error {
 	CREATE INDEX IF NOT EXISTS idx_usage_logs_user_time ON usage_logs(user_id, created_at);
 	`
 	_, err := db.conn.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Migration: add estimated_cost column if it doesn't exist
+	db.conn.Exec("ALTER TABLE usage_logs ADD COLUMN estimated_cost REAL DEFAULT 0")
+
+	return nil
 }
 
 // StartCleanupJob starts a goroutine that deletes usage_logs older than 30 days every hour.

@@ -31,3 +31,19 @@ func TestInitiatorUserEvery_FallsBackForInvalidEnv(t *testing.T) {
 		t.Fatalf("InitiatorUserEvery() with invalid string = %d, want 7", got)
 	}
 }
+
+func TestUserAgent_DefaultsToVscodeCopilotChatProfile(t *testing.T) {
+	t.Setenv("OPENCODE_VERSION", "")
+
+	if got := UserAgent(); got != "GitHubCopilotChat/0.35.0" {
+		t.Fatalf("UserAgent() = %q, want %q", got, "GitHubCopilotChat/0.35.0")
+	}
+}
+
+func TestUserAgent_UsesVersionOverride(t *testing.T) {
+	t.Setenv("OPENCODE_VERSION", "9.9.9")
+
+	if got := UserAgent(); got != "GitHubCopilotChat/9.9.9" {
+		t.Fatalf("UserAgent() = %q, want %q", got, "GitHubCopilotChat/9.9.9")
+	}
+}
