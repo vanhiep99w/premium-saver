@@ -6,12 +6,18 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // injectStreamOptions modifies the request body to add stream_options.include_usage=true
 // so the API returns token usage data in the final SSE chunk of streaming responses.
 func injectStreamOptions(req *http.Request) {
 	if req.Body == nil {
+		return
+	}
+
+	// Anthropic-style Messages API rejects OpenAI-specific stream_options.
+	if strings.HasPrefix(req.URL.Path, "/messages") {
 		return
 	}
 
